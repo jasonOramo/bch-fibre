@@ -301,7 +301,7 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha256.h \
   crypto/sha512.cpp \
   crypto/sha512.h
-  crypto_libbitcoin_crypto_a_LIBADD = \
+crypto_libbitcoin_crypto_a_LIBADD = \
   crypto/sha256_avx1.a
 
 # consensus: shared between all executables that validate any consensus rules.
