@@ -1,4 +1,4 @@
-This branch is used to migrate the codes from fibre https://github.com/bitcoinfibre/bitcoinfibre. You could use this branch to speed up the node synchronized with protocal.
+This branch is used to migrate the codes from fibre https://github.com/bitcoinfibre/bitcoinfibre. You could use this branch to speed up the node synchronized processes with protocal.
 
 Bitcoin ABC
 ===========
