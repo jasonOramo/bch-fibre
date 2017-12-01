@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest) {
         CBlockHeaderAndLengthShortTxIDs shortIDs2;
         stream >> shortIDs2;
 
-        PartiallyDownloadedChunkBlock partialBlock(&pool);
+        PartiallyDownloadedChunkBlock partialBlock(GetConfig(),&pool);
         BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) == READ_STATUS_OK);
         size_t firstChunkProcessed;
         while (!partialBlock.IsIterativeFillDone())
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE(SimpleBlockFECRoundTripTest)
         CBlockHeaderAndLengthShortTxIDs shortIDs2;
         stream >> shortIDs2;
 
-        PartiallyDownloadedChunkBlock partialBlock(&pool);
+        PartiallyDownloadedChunkBlock partialBlock(GetConfig(),&pool);
         BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) == READ_STATUS_OK);
         size_t firstChunkProcessed;
         while (!partialBlock.IsIterativeFillDone())
@@ -483,7 +483,7 @@ BOOST_AUTO_TEST_CASE(FECedBlockFECRoundTripTest)
             stream >> shortIDs2;
         }
 
-        PartiallyDownloadedChunkBlock partialBlock(&pool);
+        PartiallyDownloadedChunkBlock partialBlock(GetConfig(),&pool);
         BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) == READ_STATUS_OK);
         size_t firstChunkProcessed;
         while (!partialBlock.IsIterativeFillDone())
@@ -600,7 +600,7 @@ static void TestBlockWithMempool(const CBlock& block, CTxMemPool& pool) {
         stream >> shortIDs;
     }
 
-    PartiallyDownloadedChunkBlock partialBlock(&pool);
+    PartiallyDownloadedChunkBlock partialBlock(GetConfig(),&pool);
     BOOST_CHECK(partialBlock.InitData(shortIDs, extra_txn) == READ_STATUS_OK);
     size_t firstChunkProcessed;
     while (!partialBlock.IsIterativeFillDone())

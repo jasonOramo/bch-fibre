@@ -7,6 +7,7 @@
 #include "blockencodings.h"
 #include "consensus/merkle.h"
 #include "fec.h"
+#include "config.h"
 #include "random.h"
 #include "txmempool.h"
 #include "utiltime.h"
@@ -34,7 +35,7 @@ private:
 
 public:
     Receiver(CTxMemPool& poolIn, size_t *total_chunks_consumed_in, size_t *total_chunks_in_mempool_in, size_t *non_fec_chunks_in)
-        : partialBlock(&poolIn), total_chunks_consumed(total_chunks_consumed_in),
+        : partialBlock(GetConfig(),&poolIn), total_chunks_consumed(total_chunks_consumed_in),
         total_chunks_in_mempool(total_chunks_in_mempool_in), non_fec_chunks(non_fec_chunks_in) {}
 
     ~Receiver() { assert(header_done && block_done); }
@@ -228,7 +229,7 @@ static void RealFECedBlockRoundTripTest(benchmark::State& state, int ntxn)
         pool.addUnchecked(vtx2[i]->GetHash(), CTxMemPoolEntry(vtx2[i], 0, 0, 0, 0, 0, false, 0, LockPoints()));
         for (int j = 0; j < 10; j++) {
             txtmp.vin[0].prevout.hash = GetRandHash();
-            pool.addUnchecked(txtmp.GetHash(), CTxMemPoolEntry(MakeTransactionRef(txtmp), 0, 0, 0, 0, 0, false, 0, LockPoints()));
+            pool.addUnchecked(txtmp.GetId(), CTxMemPoolEntry(MakeTransactionRef(txtmp), 0, 0, 0, 0, 0, false, 0, LockPoints()));
         }
     }
 

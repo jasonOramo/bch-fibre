@@ -16,10 +16,11 @@
 
 #include <unordered_map>
 
+
 #include <chrono>
 #define to_millis_double(t) (std::chrono::duration_cast<std::chrono::duration<double, std::chrono::milliseconds::period> >(t).count())
 
-CBlockHeaderAndShortTxIDs::CBlockHeaderAndShortTxIDs(const CBlock& block, bool fUseWTXID, bool fDeterministic) :
+CBlockHeaderAndShortTxIDs::CBlockHeaderAndShortTxIDs(const CBlock& block, bool fDeterministic) :
         nonce(fDeterministic ? block.GetHash().GetUint64(0) : GetRand(std::numeric_limits<uint64_t>::max())),
         shorttxids(block.vtx.size() - 1), prefilledtxn(1), header(block) {
     FillShortTxIDSelector();
@@ -49,14 +50,15 @@ uint64_t CBlockHeaderAndShortTxIDs::GetShortID(const uint256 &txhash) const {
     return SipHashUint256(shorttxidk0, shorttxidk1, txhash) & 0xffffffffffffL;
 }
 
-ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& cmpctblock, const std::vector<std::pair<uint256, CTransactionRef>>& extra_txn) {
+ReadStatus PartiallyDownloadedBlock::InitData(
+    const CBlockHeaderAndShortTxIDs &cmpctblock,
+    const std::vector<std::pair<uint256, CTransactionRef>> &extra_txn) {
+
     const bool fBench = LogAcceptCategory("bench");
     std::chrono::steady_clock::time_point start;
     if (fBench)
         start = std::chrono::steady_clock::now();
 
-    const CBlockHeaderAndShortTxIDs &cmpctblock,
-    const std::vector<std::pair<uint256, CTransactionRef>> &extra_txn) {
     if (cmpctblock.header.IsNull() ||
         (cmpctblock.shorttxids.empty() && cmpctblock.prefilledtxn.empty()))
         return READ_STATUS_INVALID;
@@ -86,13 +88,10 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
         txn_available[lastprefilledindex] = cmpctblock.prefilledtxn[i].tx;
     }
     prefilled_count = cmpctblock.prefilledtxn.size();
-
-    // Calculate map of txids -> positions and check mempool to see what we have
-    // (or don't). 
+    // Calculate map of txids -> positions and check mempool to see what we have (or don't)
     std::chrono::steady_clock::time_point prefilled_filled;
     if (fBench)
         prefilled_filled = std::chrono::steady_clock::now();
-
     //Because well-formed cmpctblock messages will have a
     // (relatively) uniform distribution of short IDs, any highly-uneven
     // distribution of elements can be safely treated as a READ_STATUS_FAILED.
@@ -125,13 +124,11 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
         // Short ID collision
         return READ_STATUS_FAILED;
     }
-
     std::vector<bool> have_txn(txn_available.size());
 
     std::chrono::steady_clock::time_point shortids_mapped;
     if (fBench)
         shortids_mapped = std::chrono::steady_clock::now();
-
     {
         LOCK(pool->cs);
         const std::vector<std::pair<uint256, CTxMemPool::txiter>> &vTxHashes =
@@ -194,15 +191,17 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
             }
         }
 
+        if (fBench) {
+            std::chrono::steady_clock::time_point finished(std::chrono::steady_clock::now());
+            LogPrintf("PartiallyDownloadedBlock::InitData took %lf %lf %lf ms\n", to_millis_double(prefilled_filled - start), to_millis_double(shortids_mapped - prefilled_filled), to_millis_double(finished - shortids_mapped));
+        }
+
         // Though ideally we'd continue scanning for the two-txn-match-shortid
         // case, the performance win of an early exit here is too good to pass
         // up and worth the extra risk.
         if (mempool_count == shorttxids.size()) break;
     }
-    if (fBench) {
-        std::chrono::steady_clock::time_point finished(std::chrono::steady_clock::now());
-        LogPrintf("PartiallyDownloadedBlock::InitData took %lf %lf %lf ms\n", to_millis_double(prefilled_filled - start), to_millis_double(shortids_mapped - prefilled_filled), to_millis_double(finished - shortids_mapped));
-    }
+
     LogPrint("cmpctblock", "Initialized PartiallyDownloadedBlock for block %s "
                            "using a cmpctblock of size %lu\n",
              cmpctblock.header.GetHash().ToString(),
@@ -241,7 +240,7 @@ ReadStatus PartiallyDownloadedBlock::FillBlock(
     if (vtx_missing.size() != tx_missing_offset) return READ_STATUS_INVALID;
 
     CValidationState state;
-    if (!CheckBlock(*config, block, state)) {
+    if (!CheckBlock(*config, block, state, Params().GetConsensus())) {
         // TODO: We really want to just check merkle tree manually here, but
         // that is expensive, and CheckBlock caches a block's "checked-status"
         // (in the CBlock?). CBlock should be able to check its own merkle root
@@ -269,7 +268,7 @@ ReadStatus PartiallyDownloadedBlock::FillBlock(
 
 
 CBlockHeaderAndLengthShortTxIDs::CBlockHeaderAndLengthShortTxIDs(const CBlock& block, bool fDeterministic) :
-        CBlockHeaderAndShortTxIDs(block, true, fDeterministic), txlens(shorttxids.size()) {
+        CBlockHeaderAndShortTxIDs(block, fDeterministic), txlens(shorttxids.size()) {
     int32_t lastprefilledindex = -1;
     uint16_t index_offset = 0;
     std::vector<PrefilledTransaction>::const_iterator prefilledit = prefilledtxn.begin();
@@ -320,7 +319,7 @@ ReadStatus CBlockHeaderAndLengthShortTxIDs::FillIndexOffsetMap(std::map<size_t, 
             indexes_left.erase(it);
         }
 
-        if (current_index > MAX_BLOCK_SERIALIZED_SIZE)
+        if (current_index > MAX_TX_SIZE)
             return READ_STATUS_INVALID;
     }
 
@@ -334,7 +333,7 @@ ChunkCodedBlock::ChunkCodedBlock(const CBlock& block, const CBlockHeaderAndLengt
     std::map<size_t, size_t> index_offsets;
     assert(headerAndIDs.FillIndexOffsetMap(index_offsets) == READ_STATUS_OK);
 
-    codedBlock.reserve(MAX_BLOCK_SERIALIZED_SIZE * 1.2);
+    codedBlock.reserve(MAX_TX_SIZE * 1.2);
     VectorOutputStream stream(&codedBlock, SER_NETWORK, PROTOCOL_VERSION);
     for (std::map<size_t, size_t>::iterator it = index_offsets.begin(); it != index_offsets.end(); it++) {
         if (stream.pos() < it->first)

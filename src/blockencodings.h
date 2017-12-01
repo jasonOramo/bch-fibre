@@ -159,7 +159,7 @@ public:
     // Dummy for deserialization
     CBlockHeaderAndShortTxIDs() {}
 
-    CBlockHeaderAndShortTxIDs(const CBlock& block, bool fUseWTXID, bool fDeterministic = false);
+    CBlockHeaderAndShortTxIDs(const CBlock& block, bool fDeterministic = false);
 
     uint64_t GetShortID(const uint256 &txhash) const;
 
@@ -229,6 +229,7 @@ public:
                          const std::vector<CTransactionRef> &vtx_missing);
 };
 
+
 // FEC-Supporting extensions
 
 class CBlockHeaderAndLengthShortTxIDs : public CBlockHeaderAndShortTxIDs {
@@ -285,7 +286,7 @@ private:
 
     bool SerializeTransaction(VectorOutputStream& stream, std::map<size_t, size_t>::iterator it);
 public:
-    PartiallyDownloadedChunkBlock(CTxMemPool* poolIn) : PartiallyDownloadedBlock(poolIn), decoded_block(std::make_shared<CBlock>()) {}
+    PartiallyDownloadedChunkBlock(const Config &configIn, CTxMemPool *poolIn) : PartiallyDownloadedBlock(configIn,poolIn), decoded_block(std::make_shared<CBlock>()) {}
 
     // extra_txn is a list of extra transactions to look at, in <witness hash, reference> form
     ReadStatus InitData(const CBlockHeaderAndLengthShortTxIDs& comprblock, const std::vector<std::pair<uint256, CTransactionRef>>& extra_txn);

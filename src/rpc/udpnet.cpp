@@ -13,7 +13,7 @@
 
 using namespace std;
 
-UniValue getudppeerinfo(const JSONRPCRequest& request)
+UniValue getudppeerinfo(const Config &config, const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0)
         throw runtime_error(
@@ -67,7 +67,7 @@ UniValue getudppeerinfo(const JSONRPCRequest& request)
     return ret;
 }
 
-UniValue addudpnode(const JSONRPCRequest& request)
+UniValue addudpnode(const Config &config, const JSONRPCRequest& request)
 {
     string strCommand;
     if (request.params.size() >= 5)
@@ -117,7 +117,7 @@ UniValue addudpnode(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
-UniValue disconnectudpnode(const JSONRPCRequest& request)
+UniValue disconnectudpnode(const Config &config, const JSONRPCRequest& request)
 {
     string strCommand;
     if (request.fHelp || request.params.size() != 1)
@@ -145,15 +145,15 @@ UniValue disconnectudpnode(const JSONRPCRequest& request)
 
 
 
-
-static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)         okSafeMode
-  //  --------------------- ------------------------  -----------------------  ----------
-    { "udpnetwork",         "getudppeerinfo",         &getudppeerinfo,         true,  {} },
-    { "udpnetwork",         "addudpnode",             &addudpnode,             true,  {"node", "local_magic", "remote_magic", "ultimately_trusted", "command", "group"} },
-    { "udpnetwork",         "disconnectudpnode",      &disconnectudpnode,      true,  {"node"} },
+// clang-format off
+static const CRPCCommand commands[] = {    
+    //  category            name                      actor (function)        okSafe argNames
+    //  ------------------- ------------------------  ----------------------  ------ ----------
+    { "udpnetwork",         "getudppeerinfo",         getudppeerinfo,         true,  {} },
+    { "udpnetwork",         "addudpnode",             addudpnode,             true,  {"node", "local_magic", "remote_magic", "ultimately_trusted", "command", "group"} },
+    { "udpnetwork",         "disconnectudpnode",      disconnectudpnode,      true,  {"node"} },
 };
-
+// clang-format on
 void RegisterUDPNetRPCCommands(CRPCTable &t)
 {
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)

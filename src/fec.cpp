@@ -11,7 +11,7 @@
 
 #define DIV_CEIL(a, b) (((a) + (b) - 1) / (b))
 
-wh256_state wirehair_precalcs[DIV_CEIL(MAX_BLOCK_SERIALIZED_SIZE * 2, FEC_CHUNK_SIZE)];
+wh256_state wirehair_precalcs[DIV_CEIL(MAX_TX_SIZE * 2, FEC_CHUNK_SIZE)];
 
 FECDecoder::FECDecoder(size_t data_size, size_t chunks_provided, int32_t prng_seed) :
         chunk_count(DIV_CEIL(data_size, FEC_CHUNK_SIZE)), chunks_recvd(0),

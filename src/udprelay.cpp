@@ -3,7 +3,7 @@
 // distributed under the Affero General Public License (AGPL v3)
 
 #include "udprelay.h"
-
+#include "config.h"
 #include "chainparams.h"
 #include "util.h"
 #include "streams.h"
@@ -362,7 +362,7 @@ static void ProcessBlockThread() {
                 }
 
                 lock.unlock();
-                if (!ProcessNewBlock(Params(), pdecoded_block, false, NULL)) {
+                if (!ProcessNewBlock(GetConfig(), pdecoded_block, false, NULL)) {
                     LogPrintf("UDP: Failed to decode block %s\n", decoded_block.GetHash().ToString());
                     std::lock_guard<std::recursive_mutex> udpNodesLock(cs_mapUDPNodes);
                     RemovePartialBlock(process_block.first);
@@ -468,7 +468,7 @@ bool PartialBlockData::Init(const UDPMessage& msg) {
 PartialBlockData::PartialBlockData(const CService& node, const UDPMessage& msg) :
         timeHeaderRecvd(GetTimeMicros()), nodeHeaderRecvd(node),
         in_header(true), initialized(false),
-        currentlyProcessing(false), block_data(&mempool)
+        currentlyProcessing(false), block_data(GetConfig(),&mempool)
     { assert(Init(msg)); }
 
 void PartialBlockData::ReconstructBlockFromDecoder() {
