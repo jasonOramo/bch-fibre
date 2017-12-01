@@ -21,7 +21,7 @@ endif
 BITCOIN_CONFIG_INCLUDES=-I$(builddir)/config
 BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
-BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
+BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include -I$(srcdir)/wh256/src
 BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
 
 BITCOIN_SEEDER_INCLUDES = -I$(srcdir)/seeder
@@ -112,6 +112,7 @@ BITCOIN_CORE_H = \
   core_io.h \
   core_memusage.h \
   cuckoocache.h \
+  fec.h \
   globals.h \
   httprpc.h \
   httpserver.h \
@@ -161,6 +162,9 @@ BITCOIN_CORE_H = \
   torcontrol.h \
   txdb.h \
   txmempool.h \
+  udpapi.h \
+  udpnet.h \
+  udprelay.h \
   ui_interface.h \
   undo.h \
   util.h \
@@ -183,6 +187,17 @@ BITCOIN_CORE_H = \
   zmq/zmqnotificationinterface.h \
   zmq/zmqpublishnotifier.h
 
+FEC_H = \
+  wh256/src/cm256.h \
+  wh256/src/gf256.h \
+  wh256/src/wh256.h \
+  wh256/src/wirehair_codec_8.hpp
+
+FEC_CPP = \
+  wh256/src/cm256.cpp \
+  wh256/src/gf256.cpp \
+  wh256/src/wh256.cpp \
+  wh256/src/wirehair_codec_8.cpp
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
@@ -200,6 +215,7 @@ libbitcoin_server_a_SOURCES = \
   blockencodings.cpp \
   chain.cpp \
   checkpoints.cpp \
+  fec.cpp \
   config.cpp \
   globals.cpp \
   httprpc.cpp \
@@ -220,6 +236,7 @@ libbitcoin_server_a_SOURCES = \
   rpc/mining.cpp \
   rpc/misc.cpp \
   rpc/net.cpp \
+  rpc/udpnet.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
   script/scriptcache.cpp \
@@ -229,10 +246,14 @@ libbitcoin_server_a_SOURCES = \
   torcontrol.cpp \
   txdb.cpp \
   txmempool.cpp \
+  udpnet.cpp \
+  udprelay.cpp \
   ui_interface.cpp \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
+  $(FEC_CPP) \
+  $(FEC_H) \
   $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ
@@ -280,6 +301,8 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha256.h \
   crypto/sha512.cpp \
   crypto/sha512.h
+  crypto_libbitcoin_crypto_a_LIBADD = \
+  crypto/sha256_avx1.a
 
 # consensus: shared between all executables that validate any consensus rules.
 libbitcoin_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
@@ -548,6 +571,10 @@ endif
 %.pb.cc %.pb.h: %.proto
 	@test -f $(PROTOC)
 	$(AM_V_GEN) $(PROTOC) --cpp_out=$(@D) --proto_path=$(<D) $<
+
+%.a: %.asm
+  yasm -f x64 -f elf64 -X gnu -g dwarf2 -D LINUX -o $@ $<
+
 
 if EMBEDDED_LEVELDB
 include Makefile.leveldb.include

@@ -245,6 +245,8 @@ CSHA512::CSHA512() : bytes(0) {
     sha512::Initialize(s);
 }
 
+extern "C" void sha256_avx(const void *, uint32_t[8], uint64_t);
+
 CSHA512 &CSHA512::Write(const uint8_t *data, size_t len) {
     const uint8_t *end = data + len;
     size_t bufsize = bytes % 128;
@@ -253,15 +255,24 @@ CSHA512 &CSHA512::Write(const uint8_t *data, size_t len) {
         memcpy(buf + bufsize, data, 128 - bufsize);
         bytes += 128 - bufsize;
         data += 128 - bufsize;
-        sha512::Transform(s, buf);
+        sha256_avx(buf, s, 1);
+        // sha512::Transform(s, buf);
         bufsize = 0;
     }
+    uint64_t chunks = (end - data) / 64;
+    if (chunks) {
+        sha256_avx(data, s, chunks);
+        bytes += chunks * 64;
+        data += chunks * 64;
+    }
+    /*
     while (end >= data + 128) {
         // Process full chunks directly from the source.
         sha512::Transform(s, data);
         data += 128;
         bytes += 128;
     }
+    */
     if (end > data) {
         // Fill the buffer with what remains.
         memcpy(buf + bufsize, data, end - data);

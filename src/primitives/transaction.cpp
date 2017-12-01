@@ -8,6 +8,7 @@
 #include "hash.h"
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+#include "streams.h"
 
 std::string COutPoint::ToString() const {
     return strprintf("COutPoint(%s, %u)", hash.ToString().substr(0, 10), n);
@@ -80,9 +81,12 @@ CTransaction::CTransaction()
 CTransaction::CTransaction(const CMutableTransaction &tx)
     : nVersion(tx.nVersion), vin(tx.vin), vout(tx.vout),
       nLockTime(tx.nLockTime), hash(ComputeHash()) {}
-CTransaction::CTransaction(CMutableTransaction &&tx)
-    : nVersion(tx.nVersion), vin(std::move(tx.vin)), vout(std::move(tx.vout)),
-      nLockTime(tx.nLockTime), hash(ComputeHash()) {}
+CTransaction::CTransaction(CMutableTransaction &&tx, bool fCache) : nVersion(tx.nVersion), vin(std::move(tx.vin)), vout(std::move(tx.vout)), nLockTime(tx.nLockTime), hash(ComputeHash()) {
+    if (fCache) {
+        VectorOutputStream stream(&encodedForm, SER_NETWORK, PROTOCOL_VERSION);
+        Serialize(stream);
+    }
+}
 
 Amount CTransaction::GetValueOut() const {
     Amount nValueOut = 0;

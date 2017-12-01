@@ -12,6 +12,7 @@ TEST_BINARY=test/test_bitcoin$(EXEEXT)
 
 
 EXTRA_DIST += \
+  test/data/block413567.hex.h \
 	test/bctest.py \
 	test/bitcoin-util-test.py \
 	test/data/bitcoin-util-test.json \

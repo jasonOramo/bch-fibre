@@ -2605,6 +2605,8 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
             ProcessNewBlock(config, pblock, true, &fNewBlock);
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
+                if (fLogIPs)
+                    LogPrint("bench", "Block %s provided by %s\n", resp.blockhash.ToString(), pfrom->addr.ToString());
             }
         }
     }
@@ -2833,6 +2835,8 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
         ProcessNewBlock(config, pblock, forceProcessing, &fNewBlock);
         if (fNewBlock) {
             pfrom->nLastBlockTime = GetTime();
+            if (fLogIPs)
+                LogPrint("bench", "Block %s provided by %s\n", pblock->GetHash().ToString(), pfrom->addr.ToString());
         }
     }
 

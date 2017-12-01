@@ -33,6 +33,7 @@
 #include "script/standard.h"
 #include "timedata.h"
 #include "torcontrol.h"
+#include "udpapi.h"
 #include "txdb.h"
 #include "txmempool.h"
 #include "ui_interface.h"
@@ -197,6 +198,7 @@ void Shutdown() {
     if (pwalletMain) pwalletMain->Flush(false);
 #endif
     MapPort(false);
+    StopUDPConnections();
     UnregisterValidationInterface(peerLogic.get());
     peerLogic.reset();
     g_connman.reset();
@@ -424,6 +426,12 @@ std::string HelpMessage(HelpMessageMode mode) {
     strUsage += HelpMessageOpt(
         "-addnode=<ip>",
         _("Add a node to connect to and attempt to keep the connection open"));
+    strUsage += HelpMessageOpt(
+        "-addudpnode=<ip/host>:<port>,<local_magic>,<remote_magic>[,<group>]", 
+        _("Add a persistent UDP node, see RPC addudpnode for detailed description"));
+    strUsage += HelpMessageOpt(
+        "-addtrustedudpnode=<ip/host>:<port>,<local_magic>,<remote_magic>[,<group>]", 
+        _("Add a trusted, persistent UDP node, see RPC addudpnode for detailed description"));
     strUsage += HelpMessageOpt(
         "-banscore=<n>",
         strprintf(
