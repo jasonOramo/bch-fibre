@@ -571,10 +571,9 @@ endif
 %.pb.cc %.pb.h: %.proto
 	@test -f $(PROTOC)
 	$(AM_V_GEN) $(PROTOC) --cpp_out=$(@D) --proto_path=$(<D) $<
-
+  
 %.a: %.asm
   yasm -f x64 -f elf64 -X gnu -g dwarf2 -D LINUX -o $@ $<
-
 
 if EMBEDDED_LEVELDB
 include Makefile.leveldb.include
