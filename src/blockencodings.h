@@ -236,7 +236,8 @@ private:
     std::vector<uint32_t> txlens; // size by TransactionCompressor
     friend class PartiallyDownloadedChunkBlock;
 public:
-    CBlockHeaderAndLengthShortTxIDs(const CBlock& block, bool fDeterministic = false);
+
+    CBlockHeaderAndShortTxIDs(const CBlock& block, bool fUseWTXID, bool fDeterministic = false);
 
     // Dummy for deserialization
     CBlockHeaderAndLengthShortTxIDs() {}
